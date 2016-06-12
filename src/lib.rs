@@ -65,7 +65,7 @@ pub mod types;
 pub mod window;
 
 
-mod ops {
+pub mod ops {
 
     pub mod f32 {
         #[allow(unused_imports)]
