@@ -23,6 +23,12 @@ pub struct Hanning;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Rectangle;
 
+/// Gaussian window function
+///
+/// [Wiki entry](https://en.wikipedia.org/wiki/Window_function#Gaussian_window).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Gaussian;
+
 /// A `Signal` type that for every yielded `phase`, yields the amplitude across the `window::Type`
 /// for that phase.
 #[derive(Clone)]
@@ -64,6 +70,16 @@ impl Type for Hanning {
 impl Type for Rectangle {
     fn at_phase<S: Sample>(_phase: S) -> S {
         <S::Float as FloatSample>::identity().to_sample::<S>()
+    }
+}
+
+impl Type for Gaussian {
+    fn at_phase<S: Sample>(phase: S) -> S {
+        let edge = (-12.0f64).exp();
+        let v = phase.to_float_sample().to_sample::<f64>();
+        (((-48.0 * (v - 0.5).powi(2)).exp() - edge) / (1.0 - edge))
+            .to_sample::<S::Float>()
+            .to_sample::<S>()
     }
 }
 
@@ -116,6 +132,14 @@ impl<'a, F> Windower<'a, F, Hanning>
     }
 }
 
+impl<'a, F> Windower<'a, F, Gaussian>
+    where F: 'a + Frame,
+{
+    /// Constructor for a `Windower` using the `Hanning` window function.
+    pub fn gaussian(frames: &'a [F], bin: usize, hop: usize) -> Self {
+        Windower::new(frames, bin, hop)
+    }
+}
 
 impl<F, W> Iterator for Window<F, W> 
     where F: Frame, 
